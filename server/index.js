@@ -16,7 +16,11 @@ const {
      onCameraNameReceived,
      setRecordingInterval,
      fixRecording
-    } = require('./recording.js');
+} = require('./recording.js');
+const { performCleanup }  = require('./disk-cleanup.js');
+
+// disk cleanup
+performCleanup(60* 1000);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
