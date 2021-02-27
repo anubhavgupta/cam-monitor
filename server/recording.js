@@ -2,7 +2,9 @@
 //     soc.emit('rec-reload');
 //     await new Promise(res => setTimeout(res), 2000);
 // }
-
+const ffmpeg = require('ffmpeg');
+const fs = require('fs');
+const path  = require('path');
 function tryStartRecording(soc, interval, cb) {
     let scheduler;
     function raiseConnectionRequest() {
@@ -28,7 +30,6 @@ function onRecordingDataReceived(soc, cb) {
 function onRecordingStopped(soc, cb) {
     let onStop = (reason, error)=>{
         cb(reason, error);
-        onStop = ()=>{};
     }
     soc.on('disconnect', ()=>{
         console.log('disconnected...');
@@ -50,15 +51,49 @@ function onCameraNameReceived(soc, cb) {
     soc.on('rec-camera-name',cb);
 }
 
-function onRecordingInterval(time, cb) {
-    setInterval(cb, time);
+function setRecordingInterval(soc, chunkInterval, videoSegmentInteval) {
+    soc.on('rec-stopped', ()=>{
+        process.nextTick(()=>{
+            soc.emit('rec-start', chunkInterval);
+        })
+    });
+    setInterval(()=>{
+        soc.emit('rec-stop');
+    }, videoSegmentInteval)
 }
 
+async function fixRecording(dir, fileName) {
+    const filePath = path.join(dir, fileName);
+    var process = new ffmpeg(filePath);
+    const video = await process;
+    await new Promise ((res)=>{
+        video
+        .addCommand("-c", "copy");
+        video.save(path.join(dir, "processed_" + fileName), (error)=>{
+            fs.unlink(filePath, (error)=>{
+                if(error) {
+                    console.log('unable to delete file', error);
+                } else {
+                    console.log('deleted file');
+                }
+                res();
+            });
+            if(error) {
+                console.log('unable to convert file', error);
+            } else {
+                console.log('converted file');
+            }
+        });
+    })
+    
+    
+}
 
 module.exports = {
     tryStartRecording,
     onRecordingDataReceived,
     onRecordingStopped,
     onCameraNameReceived,
-    onRecordingInterval
+    setRecordingInterval,
+    fixRecording
 }

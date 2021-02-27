@@ -18,6 +18,7 @@ function recordVideo(stream) {
 
     recorder.onstop = () => {
         socket.emit("rec-stopped");
+        console.log('rec-stopped, sent');
     }
 
     recorder.onerror = (e) => {
@@ -26,6 +27,7 @@ function recordVideo(stream) {
 
 
     socket.on('rec-stop', (interval)=>{
+        console.log('rec-stop, received')
         recorder.stop();
     });
 

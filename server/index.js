@@ -4,15 +4,26 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path  = require('path');
 const fs = require('fs');
+const serveIndex = require('serve-index');
+const recordingDirectory = path.join(__dirname, 'public', 'recordings');
+const CHUNK_INTERVAL = 10;
+const VIDEO_SEGMENT_LENGTH = 10000;
+
 const { 
      tryStartRecording,
      onRecordingDataReceived,
      onRecordingStopped,
      onCameraNameReceived,
-     onRecordingInterval
+     setRecordingInterval,
+     fixRecording
     } = require('./recording.js');
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(
+    '/recordings',
+    express.static(path.join(__dirname, 'public','recordings')), 
+    serveIndex(path.join(__dirname, 'public', 'recordings'), { icons: true})
+);
 
 app.get('/', (req, res) => {
     console.log("received...")
@@ -27,12 +38,12 @@ io.on('connection', (soc) => {
     onCameraNameReceived(soc, (camName)=>{
         connectionMap.set(soc, { camName });
 
-        tryStartRecording(soc, 10, ()=>{
+        tryStartRecording(soc, CHUNK_INTERVAL, ()=>{
             console.log('recording started....');
             // craete file name with time stamp + camname
             const date = new Date();
             const fileName = `${camName}_${date.getMilliseconds()}_${date.toTimeString().split(" ")[0].replace(/:/g, "_")}_${date.toDateString().replace(/\s/g, "_")}.webm`;
-            const filePath = path.join(__dirname, 'public', 'recordings', fileName);
+            const filePath = path.join(recordingDirectory, fileName);
             const writeStream = fs.createWriteStream(filePath);
             
             // update data
@@ -48,8 +59,11 @@ io.on('connection', (soc) => {
         onRecordingDataReceived(soc, (data)=>{
             const connectionData = connectionMap.get(soc);
             const buff = Buffer.from(data.split(",")[1], 'base64');
-            connectionData.writeStream.write(buff);
-            console.log(`Writing data with size ${data.length} to file ${connectionData.fileName}`);
+            if(connectionData.writeStream){
+                connectionData.writeStream.write(buff);
+            } else {
+                console.log('stream not available');
+            }
         });
     
         onRecordingStopped(soc,(reason, error)=>{
@@ -57,13 +71,17 @@ io.on('connection', (soc) => {
             if(reason === 'disconnected') {
                 connectionMap.delete(soc);
             }
-            connectionData.writeStream && connectionData.writeStream.end();
-            console.log(reason, error, connectionData);
-            console.log(`Closing file ${connectionData.fileName}`, connectionMap.size);
+            if(connectionData.writeStream) {
+                connectionData.writeStream.end();
+                connectionData.writeStream = null;
+                fixRecording(recordingDirectory, connectionData.fileName);
+                console.log(reason, error, connectionData);
+                console.log(`Closing file ${connectionData.fileName}`, connectionMap.size);
+            }
         });
-    })
 
-    
+        setRecordingInterval(soc, CHUNK_INTERVAL, VIDEO_SEGMENT_LENGTH);
+    })
     
 });
 
