@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+    <script src="/socket.io/socket.io.min.js"></script>
+    
+    <style>
+        .hide{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-1">
+        <form id="form-1">
+            <label>Enter Camera Name</label>   
+            <input name="camName" type="text" id="cam-name">
+            <input type="submit" id="submit-btn">
+        </form>
+    </div>
+    <div class="screen-2 ">
+        <h1>heading...</h1>
+        <video id="video1" width="400" height="400"></video>
+        <div>
+            Video 2
+            <video id="video2" controls="true" width="400" height="400"></video>
+        </div>
+        <a id="download">Download</a>
+        <script type="module" src="js/camera.js"></script>
+        <script type="module" src="js/recorder.js"></script>   
+        <script type="module" src="js/main.js"></script>
+        <script type="module" src="js/socket.js"></script>
+        
+    </div>
+    <script>
+        
+    </script>
+    <script type="module" src="js/page1.js"></script>
+</body>
+</html>
