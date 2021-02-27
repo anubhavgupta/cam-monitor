@@ -27,7 +27,7 @@ io.on('connection', (soc) => {
     onCameraNameReceived(soc, (camName)=>{
         connectionMap.set(soc, { camName });
 
-        tryStartRecording(soc, 250, ()=>{
+        tryStartRecording(soc, 10, ()=>{
             console.log('recording started....');
             // craete file name with time stamp + camname
             const date = new Date();
@@ -49,7 +49,7 @@ io.on('connection', (soc) => {
             const connectionData = connectionMap.get(soc);
             const buff = Buffer.from(data.split(",")[1], 'base64');
             connectionData.writeStream.write(buff);
-            console.log(`Writing data with size ${data.size} to file ${connectionData.fileName}`);
+            console.log(`Writing data with size ${data.length} to file ${connectionData.fileName}`);
         });
     
         onRecordingStopped(soc,(reason, error)=>{
@@ -57,9 +57,9 @@ io.on('connection', (soc) => {
             if(reason === 'disconnected') {
                 connectionMap.delete(soc);
             }
-            connectionData.writeStream.end();
+            connectionData.writeStream && connectionData.writeStream.end();
             console.log(reason, error, connectionData);
-            console.log(`Closing file ${connectionData.fileName}`);
+            console.log(`Closing file ${connectionData.fileName}`, connectionMap.size);
         });
     })
 
