@@ -5,6 +5,7 @@ const io = require('socket.io')(http);
 const path  = require('path');
 const fs = require('fs');
 const serveIndex = require('serve-index');
+const { setupRTCServer } = require('./RTCServer.js');
 const recordingDirectory = path.join(__dirname, 'public', 'recordings');
 const CHUNK_INTERVAL = 10;
 const VIDEO_SEGMENT_LENGTH = 10000;
@@ -32,6 +33,11 @@ app.use(
 app.get('/', (req, res) => {
     console.log("received...")
     res.sendFile(__dirname + "/index.html")
+});
+
+app.get('/live', (req, res) => {
+    console.log("received...")
+    res.sendFile(__dirname + "/live.html")
 });
 
 const connectionMap = new Map();
@@ -85,7 +91,9 @@ io.on('connection', (soc) => {
         });
 
         setRecordingInterval(soc, CHUNK_INTERVAL, VIDEO_SEGMENT_LENGTH);
-    })
+    });
+
+    setupRTCServer(connectionMap, io, soc);
     
 });
 

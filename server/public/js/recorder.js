@@ -4,15 +4,24 @@ function recordVideo(stream) {
     const recorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp8'
     });
+    let fileReaderQueue = [];
     const fileReader = new FileReader();
 
     fileReader.addEventListener('load', ()=>{
         socket.emit("rec-data", fileReader.result);
+        if(fileReaderQueue.length) {
+            const data = fileReaderQueue.shift();
+            fileReader.readAsDataURL(data);
+        }
     });
 
     recorder.ondataavailable = (e) => {
         if(e.data && e.data.size > 0) {
-            fileReader.readAsDataURL(e.data);
+            if(fileReader.readyState == 1) {
+                fileReaderQueue.push(e.data);
+            } else {
+                fileReader.readAsDataURL(e.data);
+            }
         }
     };
 

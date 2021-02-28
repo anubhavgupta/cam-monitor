@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Test</title>
+</head>
+<body>
+    Test
+    <video autoplay id="local"></video>
+    <video autoplay id="remote"></video>
+    <video autoplay id="remote2"></video>
+    <script>
+        console.log('started');
+        
+        const streamPromise = navigator
+            .mediaDevices
+            .getUserMedia({ video: true})
+            .then(stream => {
+                document.querySelector("#local").srcObject = stream;
+                return stream;
+            })
+
+            // get number of clients ->
+            // for each:
+            //     init <->
+            //     icecandidate <->
+            //     description<->
+
+        
+        function setupRTC(player) {
+            const cam1 = new RTCPeerConnection();
+            const user = new RTCPeerConnection();
+            cam1.onicecandidate = function (e) {
+                if(e.candidate) {
+                    console.log("a", e.candidate);
+                    user.addIceCandidate(e.candidate);
+                }
+            }
+            user.onicecandidate = function (e) {
+                if(e.candidate) {
+                    console.log("b", e.candidate);
+                    cam1.addIceCandidate(e.candidate);
+                }
+            }
+
+            streamPromise
+                .then(stream => {
+                    stream.getTracks().forEach(track => {
+                        cam1.addTrack(track, stream);
+                    });
+                    return cam1.createOffer();
+                })
+                .then((offer)=> {
+                    return cam1.setLocalDescription(offer);
+                })
+                .then((d)=> {
+                    return user.setRemoteDescription(cam1.localDescription);
+                })
+                .then((d)=> user.createAnswer())
+                .then(answer => user.setLocalDescription(answer))
+                .then((d)=> cam1.setRemoteDescription(user.localDescription))
+                
+                user.ontrack =(e)=>{
+                    document.querySelector(player).srcObject = e.streams[0];
+                    console.log(e);
+                }
+        } 
+        
+        setupRTC('#remote');
+        setupRTC('#remote2');
+            
+    </script>
+</body>
+</html>
