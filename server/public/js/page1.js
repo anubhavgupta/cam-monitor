@@ -10,9 +10,9 @@ form1.addEventListener('submit', (e)=>{
     e.preventDefault();
     console.log(e);
     const formData = new FormData(e.target);
-    window.camName = formData.get('camName'); 
+    window.camName = (formData.get('camName') || "cam").replace(/[\s]/gi, "_"); 
     screen1.classList.add('hide');
-    heading.innerText = `Using camera ${window.camName}`;
+    heading.innerText = `Using Camera ${window.camName}`;
     screen2.classList.remove('hide');
     socket.emit('rec-camera-name', window.camName);
 })

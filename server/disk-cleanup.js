@@ -24,8 +24,8 @@ async function performCleanup(interval) {
     filesStatsResults = Array.from(filesStatsResults
         .map((stats, index) => [stats.ctimeMs, files[index]])
         .sort((a,b) => b[0] - a[0]));
-        console.log(files, filesStatsResults, remainingSpaceInGB);
-    while(remainingSpaceInGB <= 402.15085220336914 && filesStatsResults.length) {
+        console.log(files, filesStatsResults, remainingSpaceInGB, "anubhav");
+    while(remainingSpaceInGB <= 1.5 && (filesStatsResults.length >= 2)) {
         const [_, fileName] = filesStatsResults.pop();
         fs.unlinkSync(path.join(recordingDirectory, fileName));
         remainingSpaceInGB = await getFreeDiskSpace();

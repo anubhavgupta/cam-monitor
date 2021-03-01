@@ -1,22 +1,27 @@
 let currentStream = null;
 async function getCameraList() {
     const deviceList = await window.navigator.mediaDevices.enumerateDevices();
-    const cameraList = deviceList
+    let cameraList;
+    cameraList = deviceList
        .filter(({ kind })=> kind == "videoinput")
        .map((item, index)=> {
-        const facingMode = !!~item.getCapabilities().facingMode.indexOf("environment");
-        return [item, `Camera ${index}`, facingMode]
+        return [item, `Camera ${index}`];     
        });
-
+       
     const supportedCameraList = cameraList.map(item => {
-        const facingMode = !!~item[0].getCapabilities().facingMode.indexOf("environment");
-        return [...item, facingMode]
-       })
-       .filter((item) => item[2]);
-
+        if(item[0].getCapabilities().facingMode) {
+            const facingMode = !!~item[0].getCapabilities().facingMode.indexOf("environment");
+            return [...item, facingMode]
+        }   
+        return [...item, false];
+    })
+    .filter((item) => item[2]);
+       
     if(supportedCameraList.length) {
         return supportedCameraList;
     } 
+    
+    
    return cameraList; 
 }
 

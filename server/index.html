@@ -7,6 +7,39 @@
     <script src="/socket.io/socket.io.min.js"></script>
     
     <style>
+        div, html, body{
+            border: 0;
+            margin: 0;
+            outline: 0;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+        .screen-1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            flex-direction: column;
+        }
+        .screen-2 {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            text-align: center;
+            background: black;
+            color: white;
+        }
+        .form-inner{
+            display: flex;
+            flex-direction: column;
+        }
+        video {
+            width: 100%;
+            height: calc(100% - 80px);
+        }
         .hide{
             display: none;
         }
@@ -15,19 +48,16 @@
 <body>
     <div class="screen-1">
         <form id="form-1">
-            <label>Enter Camera Name</label>   
-            <input name="camName" type="text" id="cam-name">
-            <input type="submit" id="submit-btn">
+            <label>Enter Camera Name</label>
+            <div class="form-inner">
+                <input name="camName" type="text" id="cam-name">
+                <input type="submit" id="submit-btn">
+            </div>    
         </form>
     </div>
-    <div class="screen-2 ">
+    <div class="screen-2 hide">
         <h1>heading...</h1>
-        <video id="video1" width="400" height="400"></video>
-        <div>
-            Video 2
-            <video id="video2" controls="true" width="400" height="400"></video>
-        </div>
-        <a id="download">Download</a>
+        <video id="video1" ></video>        
         <script type="module" src="js/camera.js"></script>
         <script type="module" src="js/recorder.js"></script>   
         <script type="module" src="js/main.js"></script>

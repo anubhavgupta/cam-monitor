@@ -8,7 +8,7 @@ const serveIndex = require('serve-index');
 const { setupRTCServer } = require('./RTCServer.js');
 const recordingDirectory = path.join(__dirname, 'public', 'recordings');
 const CHUNK_INTERVAL = 10;
-const VIDEO_SEGMENT_LENGTH = 10000;
+const VIDEO_SEGMENT_LENGTH = 100000;
 
 const { 
      tryStartRecording,
