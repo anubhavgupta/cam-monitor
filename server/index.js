@@ -8,7 +8,7 @@ const serveIndex = require('serve-index');
 const { setupRTCServer } = require('./RTCServer.js');
 const recordingDirectory = path.join(__dirname, 'public', 'recordings');
 const CHUNK_INTERVAL = 10;
-const VIDEO_SEGMENT_LENGTH = 100000;
+const VIDEO_SEGMENT_LENGTH = 10000;
 
 const { 
      tryStartRecording,
@@ -21,7 +21,7 @@ const {
 const { performCleanup }  = require('./disk-cleanup.js');
 
 // disk cleanup
-performCleanup(60* 1000);
+//performCleanup(60* 1000);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(

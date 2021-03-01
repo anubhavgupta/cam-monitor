@@ -48,26 +48,22 @@
 <body>
     <div class="screen-1">
         <form id="form-1">
-            <label>Enter Camera Name</label>
+            <label id="timer" for="camName">Enter Camera Name:</label>
             <div class="form-inner">
                 <input name="camName" type="text" id="cam-name">
                 <input type="submit" id="submit-btn">
             </div>    
         </form>
+        <script type="module" src="js/page1.js"></script>
     </div>
     <div class="screen-2 hide">
-        <h1>heading...</h1>
+        <h1 id="screen-2-heading">heading...</h1>
         <video id="video1" ></video>        
         <script type="module" src="js/camera.js"></script>
         <script type="module" src="js/recorder.js"></script>   
         <script type="module" src="js/main.js"></script>
         <script type="module" src="js/socket.js"></script>
         <script type="module" src="js/RTCClient.js"></script>
-        
     </div>
-    <script>
-        
-    </script>
-    <script type="module" src="js/page1.js"></script>
 </body>
 </html>

@@ -1,13 +1,6 @@
-- camera switch buttons list
-- record video
-- record audio
-- save to disk
-- add server
-- pass data to server
-- save data on server
-- add route and implementation to see live stream
-- try it in mobile
-
+- auto connect back [cams]
+- auto refresh cams on server update
+- fix diskcleanup file in use issue.
 
 resources:
 - https://stackoverflow.com/questions/56826079/how-to-concat-chunks-of-incoming-binary-into-video-webm-file-node-js

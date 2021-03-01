@@ -7,6 +7,52 @@
     <title>Live Stream Cameras</title>
     <script src="/socket.io/socket.io.min.js"></script>
     <script type="module" src="js/socket.js"></script>
+    <style>
+        * {
+            border: 0;
+            outline: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        html {
+            background-image: radial-gradient(#2a9d8f 1px, #FFF 1px);
+            background-size: 40px 40px;
+        }
+       
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-top: 25px;
+        }
+        .video-box {
+            display: flex;
+            flex-direction: column-reverse;
+            margin: 20px;
+            text-align: center;
+            font-size: 24px;
+            box-shadow: 0 0 0px 4px #e76f51, 0 0 0px 8px #264653, 0 0 0px 12px #2a9d8f;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #e9c46a;
+            border: 4px solid #f4a261;
+            min-height: 250px;
+        }
+        label {
+            margin-top: 5px;
+            background: #264653;
+            color: #2a9d8f;
+            font-family: system-ui;
+            border-radius: 5px;
+            padding: 5px;
+            margin: 5px;
+        }
+        .video-box > video {
+            width: 250px;
+            height: auto;
+            flex-grow: 1;
+        }
+    </style>
 </head>
 <body>
     <div class="container">

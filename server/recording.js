@@ -5,6 +5,7 @@
 const ffmpeg = require('ffmpeg');
 const fs = require('fs');
 const path  = require('path');
+
 function tryStartRecording(soc, interval, cb) {
     let scheduler;
     function raiseConnectionRequest() {
@@ -32,6 +33,7 @@ function onRecordingStopped(soc, cb) {
         cb(reason, error);
     }
     soc.on('disconnect', ()=>{
+        //clearInterval(recordingIntervalScheduler);
         console.log('disconnected...');
         onStop('disconnected', null);
     });
@@ -52,14 +54,21 @@ function onCameraNameReceived(soc, cb) {
 }
 
 function setRecordingInterval(soc, chunkInterval, videoSegmentInteval) {
+    
     soc.on('rec-stopped', ()=>{
         process.nextTick(()=>{
             soc.emit('rec-start', chunkInterval);
         })
     });
-    setInterval(()=>{
-        soc.emit('rec-stop');
-    }, videoSegmentInteval)
+
+    soc.on('rec-started', ()=>{
+        setTimeout(function () {
+            soc.emit('rec-stop');
+            console.log('rec-stop, via interval');
+        }, videoSegmentInteval);
+    });
+
+    
 }
 
 async function fixRecording(dir, fileName) {
