@@ -79,18 +79,18 @@ async function fixRecording(dir, fileName) {
         video
         .addCommand("-c", "copy");
         video.save(path.join(dir, "processed_" + fileName), (error)=>{
-            fs.unlink(filePath, (error)=>{
-                if(error) {
-                    console.log('unable to delete file', error);
-                } else {
-                    console.log('deleted file');
-                }
-                res();
-            });
             if(error) {
                 console.log('unable to convert file', error);
             } else {
                 console.log('converted file');
+                fs.unlink(filePath, (error)=>{
+                    if(error) {
+                        console.log('unable to delete file', error);
+                    } else {
+                        console.log('deleted file');
+                    }
+                    res();
+                });
             }
         });
     })

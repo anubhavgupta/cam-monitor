@@ -9,6 +9,7 @@ const { setupRTCServer } = require('./RTCServer.js');
 const recordingDirectory = path.join(__dirname, 'public', 'recordings');
 const CHUNK_INTERVAL = 10;
 const VIDEO_SEGMENT_LENGTH = 10000;
+const MIN_BUFFER_DISK_SPACE_IN_GB = 1.5;
 
 const { 
      tryStartRecording,
@@ -21,7 +22,7 @@ const {
 const { performCleanup }  = require('./disk-cleanup.js');
 
 // disk cleanup
-//performCleanup(60* 1000);
+performCleanup(60* 1000, MIN_BUFFER_DISK_SPACE_IN_GB);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
@@ -52,7 +53,7 @@ io.on('connection', (soc) => {
             console.log('recording started....');
             // craete file name with time stamp + camname
             const date = new Date();
-            const fileName = `${camName}_${date.getMilliseconds()}_${date.toTimeString().split(" ")[0].replace(/:/g, "_")}_${date.toDateString().replace(/\s/g, "_")}.webm`;
+            const fileName = `${camName}_${date.toTimeString().split(" ")[0].replace(/:/g, "_")}_${date.getMilliseconds()}_${date.toDateString().replace(/\s/g, "_")}.webm`;
             const filePath = path.join(recordingDirectory, fileName);
             const writeStream = fs.createWriteStream(filePath);
             

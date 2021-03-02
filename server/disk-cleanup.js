@@ -13,7 +13,7 @@ async function getFreeDiskSpace() {
     return remainingSpaceInGB;
 }
 
-async function performCleanup(interval) {
+async function performCleanup(interval, MIN_BUFFER_DISK_SPACE_IN_GB) {
     let remainingSpaceInGB = await getFreeDiskSpace();
     const files = await fs.promises.readdir(recordingDirectory);
     const filesStatsPromises = files
@@ -24,8 +24,8 @@ async function performCleanup(interval) {
     filesStatsResults = Array.from(filesStatsResults
         .map((stats, index) => [stats.ctimeMs, files[index]])
         .sort((a,b) => b[0] - a[0]));
-        console.log(files, filesStatsResults, remainingSpaceInGB, "anubhav");
-    while(remainingSpaceInGB <= 1.5 && (filesStatsResults.length >= 2)) {
+        console.log(files, filesStatsResults, remainingSpaceInGB);
+    while(remainingSpaceInGB <= MIN_BUFFER_DISK_SPACE_IN_GB && (filesStatsResults.length >= 2)) {
         const [_, fileName] = filesStatsResults.pop();
         fs.unlinkSync(path.join(recordingDirectory, fileName));
         remainingSpaceInGB = await getFreeDiskSpace();

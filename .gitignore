@@ -1,0 +1,12 @@
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# Dependency directories
+server/node_modules/
+
+# Optional npm cache directory
+.npm
+
+# recordings
+server/public/recordings
