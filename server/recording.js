@@ -32,9 +32,9 @@ function onRecordingStopped(soc, cb) {
     let onStop = (reason, error)=>{
         cb(reason, error);
     }
-    soc.on('disconnect', ()=>{
+    soc.on('disconnect', (reason)=>{
         //clearInterval(recordingIntervalScheduler);
-        console.log('disconnected...');
+        console.log('disconnected...', reason);
         onStop('disconnected', null);
     });
 
@@ -56,8 +56,10 @@ function onCameraNameReceived(soc, cb) {
 function setRecordingInterval(soc, chunkInterval, videoSegmentInteval) {
     
     soc.on('rec-stopped', ()=>{
+        console.log('rec-stopped, via interval');
         process.nextTick(()=>{
             soc.emit('rec-start', chunkInterval);
+            console.log('rec-start, via interval');
         })
     });
 
@@ -75,25 +77,30 @@ async function fixRecording(dir, fileName) {
     const filePath = path.join(dir, fileName);
     var process = new ffmpeg(filePath);
     const video = await process;
-    await new Promise ((res)=>{
+    await new Promise ((res, rej)=>{
         video
         .addCommand("-c", "copy");
         video.save(path.join(dir, "processed_" + fileName), (error)=>{
             if(error) {
-                console.log('unable to convert file', error);
+                rej(error);
             } else {
-                console.log('converted file');
-                fs.unlink(filePath, (error)=>{
-                    if(error) {
-                        console.log('unable to delete file', error);
-                    } else {
-                        console.log('deleted file');
-                    }
-                    res();
-                });
+                res();
+            }
+        })
+    })
+    .then(()=>{
+        console.log('converted file', fileName);
+        fs.unlink(filePath, (error)=>{
+            if(error) {
+                console.log('ERROR: unable to delete file', error);
+            } else {
+                console.log('deleted file', fileName);
             }
         });
     })
+    .catch((err)=>{
+        console.log('ERROR: unable to convert file', err);
+    });
     
     
 }

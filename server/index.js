@@ -8,7 +8,7 @@ const serveIndex = require('serve-index');
 const { setupRTCServer } = require('./RTCServer.js');
 const recordingDirectory = path.join(__dirname, 'public', 'recordings');
 const CHUNK_INTERVAL = 10;
-const VIDEO_SEGMENT_LENGTH = 10000;
+const VIDEO_SEGMENT_LENGTH = 5 * 60 * 1000;
 const MIN_BUFFER_DISK_SPACE_IN_GB = 1.5;
 
 const { 
@@ -85,7 +85,7 @@ io.on('connection', (soc) => {
             if(connectionData.writeStream) {
                 connectionData.writeStream.end();
                 connectionData.writeStream = null;
-                fixRecording(recordingDirectory, connectionData.fileName);
+                //fixRecording(recordingDirectory, connectionData.fileName);
                 console.log(reason, error, connectionData);
                 console.log(`Closing file ${connectionData.fileName}`, connectionMap.size);
             }
@@ -98,6 +98,6 @@ io.on('connection', (soc) => {
     
 });
 
-http.listen(3000, ()=>{
+http.listen(process.argv[2] || 3000, ()=>{
     console.log("listening...")
 })
