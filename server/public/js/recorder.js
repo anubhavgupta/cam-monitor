@@ -13,6 +13,7 @@ function recordVideo(stream) {
         socket.emit("rec-data", fileReader.result);
         if(fileReaderQueue.length) {
             const data = fileReaderQueue.shift();
+            socket.emit('queue-size', `shift: ${fileReaderQueue.length}`);
             fileReader.readAsDataURL(data);
         }
     });
@@ -21,6 +22,7 @@ function recordVideo(stream) {
         if(e.data && e.data.size > 0) {
             if(fileReader.readyState == 1) {
                 fileReaderQueue.push(e.data);
+                socket.emit('queue-size', `push: ${fileReaderQueue.length}`);
             } else {
                 fileReader.readAsDataURL(e.data);
                 isConvertingData = true;
@@ -28,21 +30,24 @@ function recordVideo(stream) {
         }
     };
 
+    function stop() {
+        socket.emit("rec-stopped");
+        console.log('rec-stopped, sent');
+    }
+
+    function checkIfDataQueueEmpty() {
+        return fileReaderQueue.length <= 0
+    }
+
+    function checkAndStop() {
+        if(checkIfDataQueueEmpty() && !isConvertingData) {
+            stop();
+        } else{
+            setTimeout(checkAndStop, 1000);
+        }
+    }
+
     recorder.onstop = () => {
-        function stop() {
-            socket.emit("rec-stopped");
-            console.log('rec-stopped, sent');
-        }
-        function checkIfDataQueueEmpty() {
-            return fileReaderQueue.length <= 0
-        }
-        function checkAndStop() {
-            if(checkIfDataQueueEmpty() && !isConvertingData) {
-                stop();
-            } else{
-                setTimeout(checkAndStop, 1000);
-            }
-        }
         checkAndStop();
     }
 

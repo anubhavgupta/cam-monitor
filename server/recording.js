@@ -1,7 +1,3 @@
-// async function reloadDevice() {
-//     soc.emit('rec-reload');
-//     await new Promise(res => setTimeout(res), 2000);
-// }
 const ffmpeg = require('ffmpeg');
 const fs = require('fs');
 const path  = require('path');
@@ -18,6 +14,11 @@ class Recorder {
         this._onError = this._onError.bind(this);
         this._onIntervalRecordingStopped = this._onIntervalRecordingStopped.bind(this);
         this._onIntervalRecordingStarted = this._onIntervalRecordingStarted.bind(this);
+        this.soc.on('queue-size', this.monitorQueueSize);
+    }
+
+    monitorQueueSize(data) {
+        console.log('Queue size -->', data);
     }
 
     _raiseConnectionRequest() {
@@ -79,6 +80,7 @@ class Recorder {
     }
 
     _onIntervalRecordingStarted() {
+        console.log('rec-start, via interval received');
         this.intervalScheduler = setTimeout(() => {
             this.soc.emit('rec-stop');
             console.log('rec-stop, via interval');
@@ -132,6 +134,7 @@ class Recorder {
         this.soc.off('rec-camera-name', this.onCamNameReceivedCB);
         this.soc.off('rec-stopped', this._onIntervalRecordingStopped);
         this.soc.off('rec-started',this._onIntervalRecordingStarted);
+        this.soc.off('queue-size', this.monitorQueueSize);
         clearTimeout(this.intervalScheduler);
         this.soc = null;
     }
