@@ -6,110 +6,137 @@ const ffmpeg = require('ffmpeg');
 const fs = require('fs');
 const path  = require('path');
 
-function tryStartRecording(soc, interval, cb) {
-    let scheduler;
-    function raiseConnectionRequest() {
-        soc.emit('rec-start', interval);
+class Recorder {
+    constructor(soc){
+        this.soc = soc;
+        this.startRecordingScheduler = null;
+        this.intervalScheduler = null;
+        this._raiseConnectionRequest = this._raiseConnectionRequest.bind(this);
+        this._listenForRecordingStartedACK = this._listenForRecordingStartedACK.bind(this);
+        this._onDisconnect = this._onDisconnect.bind(this);
+        this._onStopped = this._onStopped.bind(this);
+        this._onError = this._onError.bind(this);
+        this._onIntervalRecordingStopped = this._onIntervalRecordingStopped.bind(this);
+        this._onIntervalRecordingStarted = this._onIntervalRecordingStarted.bind(this);
+    }
+
+    _raiseConnectionRequest() {
+        this.soc.emit('rec-start', this.recordingInterval);
         console.log('rec-start, sent');
-        scheduler = setTimeout(raiseConnectionRequest, 2000);
+        this.startRecordingScheduler = setTimeout(this._raiseConnectionRequest, 2000);
     }
 
-    function listenForAck() {
-        clearTimeout(scheduler);    
+    _listenForRecordingStartedACK(){
+        clearTimeout(this.startRecordingScheduler);    
         console.log('rec-started, received');
-        cb();
+        this.startRecordingCB();
     }
 
-    soc.on('rec-started', listenForAck);
-    raiseConnectionRequest();
-}
-
-function onRecordingDataReceived(soc, cb) {
-    soc.on('rec-data',cb);
-}
-
-function onRecordingStopped(soc, cb) {
-    let onStop = (reason, error)=>{
-        cb(reason, error);
+    tryStartRecording(interval, cb) {
+        this.recordingInterval = interval;
+        this.startRecordingCB = cb;
+        this.soc.on('rec-started', this._listenForRecordingStartedACK);
+        this._raiseConnectionRequest();
     }
-    soc.on('disconnect', (reason)=>{
-        //clearInterval(recordingIntervalScheduler);
+
+    onRecordingDataReceived(cb) {
+        this.onDataReceivedCB = cb;
+        this.soc.on('rec-data', this.onDataReceivedCB);
+    }
+
+    _onDisconnect(reason) {
         console.log('disconnected...', reason);
-        onStop('disconnected', null);
-    });
+        this.destroy();
+        this.onStopped('disconnected', null);
+    }
 
-    soc.on('rec-stopped',  ()=>{
+    _onStopped() {
         console.log('rec-stopped...');
-        onStop('stopped', null);
-    });
+        this.onStopped('stopped', null);
+    }
 
-    soc.on('rec-error',  (errorMessage)=>{
+    _onError(errorMessage) {
         console.log('rec-error...');
-        onStop('error', errorMessage);
-    });
-}
+        this.onStopped('error', errorMessage);
+    }
 
-function onCameraNameReceived(soc, cb) {
-    soc.on('rec-camera-name',cb);
-}
+    onRecordingStopped(cb){
+        this.onStopped = cb;
+        this.soc.on('disconnect', this._onDisconnect);
+        this.soc.on('rec-stopped',  this._onStopped);
+        this.soc.on('rec-error', this._onError);
+    }
 
-function setRecordingInterval(soc, chunkInterval, videoSegmentInteval) {
-    
-    soc.on('rec-stopped', ()=>{
+    onCameraNameReceived(cb) {
+        this.onCamNameReceivedCB = cb;
+        this.soc.on('rec-camera-name', this.onCamNameReceivedCB);
+    }
+
+    _onIntervalRecordingStopped() {
         console.log('rec-stopped, via interval');
-        process.nextTick(()=>{
-            soc.emit('rec-start', chunkInterval);
-            console.log('rec-start, via interval');
-        })
-    });
+        this.soc.emit('rec-start', this.recordingInterval);
+        console.log('rec-start, via interval');
+    }
 
-    soc.on('rec-started', ()=>{
-        setTimeout(function () {
-            soc.emit('rec-stop');
+    _onIntervalRecordingStarted() {
+        this.intervalScheduler = setTimeout(() => {
+            this.soc.emit('rec-stop');
             console.log('rec-stop, via interval');
-        }, videoSegmentInteval);
-    });
+        }, this.videoSegmentInteval);
+    }
 
-    
-}
+    setRecordingInterval(videoSegmentInteval) {
+        this.videoSegmentInteval = videoSegmentInteval;
+        this.soc.on('rec-stopped', this._onIntervalRecordingStopped);
+        this.soc.on('rec-started',this._onIntervalRecordingStarted);
+    }
 
-async function fixRecording(dir, fileName) {
-    const filePath = path.join(dir, fileName);
-    var process = new ffmpeg(filePath);
-    const video = await process;
-    await new Promise ((res, rej)=>{
-        video
-        .addCommand("-c", "copy");
-        video.save(path.join(dir, "processed_" + fileName), (error)=>{
-            if(error) {
-                rej(error);
-            } else {
-                res();
-            }
+    fixRecording(dir, fileName) {
+        const filePath = path.join(dir, fileName);
+        var process = new ffmpeg(filePath);
+        return process
+        .then((video)=>{
+            return new Promise ((res, rej)=>{
+                video
+                .addCommand("-c", "copy");
+                video.save(path.join(dir, "processed_" + fileName), (error)=>{
+                    if(error) {
+                        rej(error);
+                    } else {
+                        res();
+                    }
+                })
+            })
         })
-    })
-    .then(()=>{
-        console.log('converted file', fileName);
-        fs.unlink(filePath, (error)=>{
-            if(error) {
-                console.log('ERROR: unable to delete file', error);
-            } else {
-                console.log('deleted file', fileName);
-            }
+        .then(()=>{
+            console.log('converted file', fileName);
+            fs.unlink(filePath, (error)=>{
+                if(error) {
+                    console.log('ERROR: unable to delete file', error);
+                } else {
+                    console.log('deleted file', fileName);
+                }
+            });
+        })
+        .catch((err)=>{
+            console.log('ERROR: unable to convert file', err);
         });
-    })
-    .catch((err)=>{
-        console.log('ERROR: unable to convert file', err);
-    });
-    
-    
+    }
+
+    destroy() {
+        this.soc.off('rec-started', this._listenForRecordingStartedACK);
+        this.soc.off('rec-data', this.onDataReceivedCB);
+        this.soc.off('disconnect', this._onDisconnect);
+        this.soc.off('rec-stopped',  this._onStopped);
+        this.soc.off('rec-error', this._onError);
+        this.soc.off('rec-camera-name', this.onCamNameReceivedCB);
+        this.soc.off('rec-stopped', this._onIntervalRecordingStopped);
+        this.soc.off('rec-started',this._onIntervalRecordingStarted);
+        clearTimeout(this.intervalScheduler);
+        this.soc = null;
+    }
 }
 
 module.exports = {
-    tryStartRecording,
-    onRecordingDataReceived,
-    onRecordingStopped,
-    onCameraNameReceived,
-    setRecordingInterval,
-    fixRecording
+    Recorder
 }

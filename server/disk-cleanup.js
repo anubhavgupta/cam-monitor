@@ -9,7 +9,7 @@ const recordingDirectory = path.join(__dirname, 'public', 'recordings');
 // Async
 async function getFreeDiskSpace() {
     const { total:{ free }}  = await diskspace();
-    let remainingSpaceInGB = free/Math.pow(1024, 3);
+    let remainingSpaceInGB = free/Math.pow(1024, 2);
     return remainingSpaceInGB;
 }
 
@@ -33,7 +33,7 @@ async function performCleanup(interval, MIN_BUFFER_DISK_SPACE_IN_GB) {
         console.log('deleted...', remainingSpaceInGB);
     }
     console.log("CleanUp completed:");
-    setTimeout(()=>performCleanup(interval), interval);
+    setTimeout(()=>performCleanup(interval, MIN_BUFFER_DISK_SPACE_IN_GB), interval);
 }
 
 module.exports = {
