@@ -13,7 +13,6 @@ function recordVideo(stream) {
         socket.emit("rec-data", fileReader.result);
         if(fileReaderQueue.length) {
             const data = fileReaderQueue.shift();
-            socket.emit('queue-size', `shift: ${fileReaderQueue.length}`);
             fileReader.readAsDataURL(data);
         }
     });
@@ -22,7 +21,9 @@ function recordVideo(stream) {
         if(e.data && e.data.size > 0) {
             if(fileReader.readyState == 1) {
                 fileReaderQueue.push(e.data);
-                socket.emit('queue-size', `push: ${fileReaderQueue.length}`);
+                if(fileReaderQueue.length >= 100) {
+                    socket.emit('queue-size', `push: ${fileReaderQueue.length}`);
+                }
             } else {
                 fileReader.readAsDataURL(e.data);
                 isConvertingData = true;
